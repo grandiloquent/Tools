@@ -8,27 +8,38 @@ namespace 视频
 	{
 		public static void Main(string[] args)
 		{
-			var dir = @"C:\Users\Administrator\Documents\SharpDevelop Projects\视频\视频";
-			var n = "Games.cs";
-			if (!File.Exists(Path.Combine(dir, n))) {
-				File.Create(Path.Combine(dir, n)).Dispose();
-			}
+//			var dir = @"C:\Users\Administrator\Documents\SharpDevelop Projects\视频\视频";
+//			var n = "Games.cs";
+//			if (!File.Exists(Path.Combine(dir, n))) {
+//				File.Create(Path.Combine(dir, n)).Dispose();
+//			}
+			//Utils.SearchInFiles();
+			
+			//Androids.CreateFile("TestActivity.java");
 			
 			var kbh = new KeyboardShare();
 			kbh.ConfigHook();
-			int _mode=1;
+			int _mode = 1;
 			kbh.KeyDown += async (s, k) => {
-				if (_mode ==1) {
+				if (_mode == 1) {
 					switch (k.Key) {
-					
+						case Key.F5:
+							Utils.SetKeyFrames();
+							break;
+						case Key.F6:
+							Utils.DownloadFile();
+							break;
+						case Key.F7:
+							Utils.ConvertSourceCodes(ClipboardShare.GetText());
+							break;
 						case Key.F8:
-							
+							Shared.CompileCpp(@"C:\Users\Administrator\Documents\SharpDevelop Projects\视频\C\main.c");
 							break;
 						case Key.F9:
-							Games.FashiStrong();
+							Games.DaoshiStrong();
 							break;
 					}
-				}else if (_mode == 2) {
+				} else if (_mode == 2) {
 					switch (k.Key) {
 					
 						case Key.F8:

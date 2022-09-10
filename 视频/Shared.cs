@@ -3,10 +3,12 @@
 	using System;
 	using System.Collections.Generic;
 	using System.ComponentModel;
+	using System.Diagnostics;
 	using System.Drawing;
 	using System.Drawing.Imaging;
 	using System.IO;
 	using System.Linq;
+	using System.Text.RegularExpressions;
 	using System.Threading;
 	using System;
 	using System.Globalization;
@@ -162,6 +164,106 @@
                 return;
             Directory.CreateDirectory(path);
         }
+        public static void CompileCpp(string f)
+		{
+			//string exeDirectory=@"C:\msys64\mingw64\bin";
+			var extension = Path.GetExtension(f).ToLower();
+			var cmd = "";
+			var dir = Path.Combine(Path.GetDirectoryName(f), "bin");
+			if (extension == ".fsx") {
+				cmd = string.Format("/K dotnet \"C:\\Program Files\\dotnet\\sdk\\3.0.100-preview-009812\\FSharp\\fsi.exe\" \"{0}\"", f);
+				Process.Start(new ProcessStartInfo() {
+					FileName = "cmd",
+					Arguments = cmd,
+					WorkingDirectory = dir
+				});
+				return;
+			}
+			//			var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "output");
+			//			if (!Directory.Exists(dir)) {
+			//				Directory.CreateDirectory(dir);
+			//			}
+			if (!Directory.Exists(dir))
+				Directory.CreateDirectory(dir);
+			var arg = "";
+			var arg2 = "";
+			var argLines = File.ReadLines(f, new UTF8Encoding(false)).ToList();
+//			foreach (var element in argLines) {
+//				if (string.IsNullOrWhiteSpace(element))
+//					continue;
+//				if (element.StartsWith("// ")) {
+//					arg += element.Substring(3) + " ";
+//				} else
+//					break;s
+//			}
+			if (argLines[0].StartsWith("// ")) {
+				arg = argLines[0].Substring(3) + " ";
+			}
+			if (argLines[1].StartsWith("// ")) {
+				arg2 = argLines[1].Substring(3) + " ";
+			}
+			if (argLines[2].StartsWith("// ")) {
+				arg2 += argLines[2].Substring(3) + " ";
+			}
+			arg = Regex.Replace(arg, "\\./[0-9a-zA-Z_\\.]+", new MatchEvaluator(m => m.Value.GetFullPath(Path.GetDirectoryName(f))));
+			var exe = (Path.GetFileNameWithoutExtension(f) + ".exe").GetDesktopPath();
+			try {
+				var ps = Process.GetProcesses().Where(i => i.ProcessName == Path.GetFileNameWithoutExtension(f) || i.ProcessName == "cmd");
+				if (ps.Any()) {
+					foreach (var p in ps) {
+						p.Kill();
+					}
+				}
+			} catch (Exception e) {
+				Console.WriteLine("ERROR:" + e.Message);
+			}
+			string workingDirectory = @"C:\msys64\mingw64\bin\";
+			// -finput-charset=UTF-8 -fexec-charset=GBK -lstdc++fs  -std=c++17
+			//var cmd = string.Format("/K gcc -Wall -g -finput-charset=GBK -fexec-charset=GBK \"{0}\" -o \"{1}\\{3}\" {2} && \"{1}\\{3}\" ", f, dir, arg, exe);
+			// -Wall -g
+			// -std=c99 -Wall -O2
+			// -Wl,-E
+			if (extension == ".c") {
+				cmd = string.Format("/K {4}gcc \"{0}\" -o \"{3}\" {2} && \"{3}\" {5}", f, dir, arg, exe, workingDirectory, arg2);
+			} else if (extension == ".cpp") {
+				// dir {1}\\{1}\\
+				cmd = string.Format("/K {4}g++ -Wall -g \"{0}\" -o \"{3}\" {2} && \"{3}\" {5}", f, "", arg, exe, workingDirectory, arg2);
+			}
+			Console.WriteLine(cmd);
+			Process.Start(new ProcessStartInfo() {
+				FileName = "cmd",
+				Arguments = cmd,
+				WorkingDirectory = Path.GetDirectoryName(f)
+			});
+		}
+public static string GetFullPath(this string relativePath, string replacePath = null)
+		{
+			if (replacePath == null) {
+				replacePath = AppDomain.CurrentDomain.BaseDirectory;
+			}
+			int parentStart = relativePath.IndexOf("..\\");
+			int absoluteStart = relativePath.IndexOf("./");
+			checked {
+				if (parentStart >= 0) {
+					int parentLength;
+					for (parentLength = 0;
+					     relativePath.Substring(parentStart + parentLength).Contains("..\\");
+					     parentLength += "..\\".Length) {
+						replacePath = new DirectoryInfo(replacePath).Parent.FullName;
+					}
+					relativePath = relativePath.Replace(relativePath.Substring(parentStart, parentLength),
+						replacePath + "\\");
+				} else if (absoluteStart >= 0) {
+					relativePath = replacePath + relativePath.Substring(1);
+				}
+				return relativePath;
+			}
+		}
+		public static string GetDesktopPath(this string f)
+		{
+			return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), f);
+		}
+		
 	}
 	public static class ClipboardShare
 	{
@@ -430,7 +532,7 @@
 		Help = 0x2F,
 		Key0 = 0x30,
 		Key1 = 0x31,
-		Key2 = 0x32,
+		Key2 = 0x322,
 		Key3 = 0x33,
 		Key4 = 0x34,
 		Key5 = 0x35,

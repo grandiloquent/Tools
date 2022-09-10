@@ -38,5 +38,39 @@ namespace 视频
 				_threadRun = !_threadRun;
 			}
 		}
+		public static void DaoshiStrong()
+		{
+			Console.WriteLine("道士强化");
+			IntPtr thread = IntPtr.Zero;
+			if (_thread1 == IntPtr.Zero) {
+				_thread1 = Kernel32.CreateThread(IntPtr.Zero, 0, new THREAD_START_ROUTINE((v) => {
+					int count = 0;
+						Shared.SendKey(0x32);
+							Kernel32.Sleep(500);
+					while (true) {
+						Shared.SendKey(0x31);
+							Kernel32.Sleep(500);
+						if (count == 5) {
+							count = 0;
+							
+//							Shared.SendKey(0x33);
+//							Kernel32.Sleep(1000);
+							Shared.SendKey(0x32);
+							Kernel32.Sleep(500);
+						}
+						count++;
+					}
+					return 0;
+				}), IntPtr.Zero, 0, thread);
+				_threadRun = true;
+			} else {
+				if (_threadRun) {
+					Kernel32.SuspendThread(_thread1);
+				} else {
+					Kernel32.ResumeThread(_thread1);
+				}
+				_threadRun = !_threadRun;
+			}
+		}
 	}
 }
